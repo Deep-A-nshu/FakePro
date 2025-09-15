@@ -1,58 +1,56 @@
-import React, { useContext } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, TextInput } from "react-native";
-import { useRouter } from "expo-router";
-import { AppContext } from "../app/context/AppContext";
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { useCall } from '../context/CallContext';
 
-export default function ScheduleScreen() {
-  const router = useRouter();
-  const { setCountdown, setScheduledTime } = useContext(AppContext);
+export default function Schedule() {
+  const { scheduleCall } = useCall();
+  const [minutes, setMinutes] = useState('5');
+  const [confirmation, setConfirmation] = useState('');
 
-  const quickSchedule = (minutes: number) => {
-    setCountdown(minutes * 60);
-    router.back();
-  };
-
-  const scheduleCustomTime = (time: string) => {
-    const now = new Date();
-    const [hours, mins] = time.split(":").map((n) => parseInt(n, 10));
-    const scheduled = new Date(now);
-    scheduled.setHours(hours, mins, 0, 0);
-    if (scheduled <= now) scheduled.setDate(scheduled.getDate() + 1);
-    setScheduledTime(scheduled.toISOString());
-    router.back();
+  const handleSchedule = () => {
+    const m = parseInt(minutes, 10);
+    if (isNaN(m) || m < 1 || m > 60) {
+      setConfirmation('Enter 1-60 minutes');
+      return;
+    }
+    scheduleCall(m);
+    setConfirmation(`Call scheduled in ${m} minutes`);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Schedule Fake Call</Text>
-      <Text style={styles.subheading}>Quick Schedule</Text>
-      <View style={styles.quickRow}>
-        {[1, 2, 5, 10, 15, 30].map((m) => (
-          <TouchableOpacity key={m} onPress={() => quickSchedule(m)} style={styles.quickBtn}>
-            <Text style={styles.quickText}>{m} min</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.subheading}>Custom Time (HH:MM)</Text>
+      <Text style={styles.label}>Minutes until call (1-60):</Text>
       <TextInput
-        placeholder="14:30"
-        placeholderTextColor="#666"
         style={styles.input}
-        onSubmitEditing={(e) => scheduleCustomTime(e.nativeEvent.text)}
-        keyboardType="numbers-and-punctuation"
-        returnKeyType="done"
+        keyboardType="number-pad"
+        value={minutes}
+        onChangeText={setMinutes}
       />
+      <TouchableOpacity style={styles.button} onPress={handleSchedule}>
+        <Text style={styles.buttonText}>Schedule</Text>
+      </TouchableOpacity>
+      {confirmation ? <Text style={styles.confirm}>{confirmation}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111", padding: 20 },
-  heading: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 20 },
-  subheading: { color: "#bbb", fontSize: 18, marginTop: 20, marginBottom: 10 },
-  quickRow: { flexDirection: "row", flexWrap: "wrap" },
-  quickBtn: { backgroundColor: "#333", padding: 15, borderRadius: 10, margin: 5 },
-  quickText: { color: "#fff" },
-  input: { backgroundColor: "#222", color: "#fff", padding: 15, borderRadius: 10, fontSize: 16 },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  label: { fontSize: 18, marginBottom: 10 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: '#d9534f',
+    padding: 15,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  buttonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  confirm: { marginTop: 20, fontSize: 16 },
 });
+
